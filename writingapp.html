@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Writing App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            background-color: #333;
+            color: #fff;
+            padding: 20px 0;
+            margin: 0;
+        }
+
+        #app-container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 5px;
+            text-align: left;
+            position: relative;
+        }
+
+        #editor {
+            padding: 10px;
+            border: 1px solid #ccc;
+            min-height: 200px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+
+        p {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .info-text {
+            font-style: italic;
+        }
+
+        .btn-clear {
+            background-color: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            position: absolute; /* Use absolute positioning for the button */
+            bottom: 60px; /* Adjust top position as needed */
+            right: 20px; /* Adjust right position as needed */
+        }
+
+        .btn-clear:hover {
+            background-color: #c0392b;
+        }
+
+        #dark-btn {
+            display: flex;
+            justify-content: space-between; /* Place dark mode button on the right */
+            align-items: center; /* Vertically align content */
+        }
+        .btn-dark-mode {
+            background-color: #222;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 0 20px 0;
+            cursor: pointer;
+            border-radius: 5px;
+            
+        }
+        /* Add dark mode styles */
+        body.dark-mode {
+            background-color: #222;
+        }
+        /* Add timer styles */
+        #timer {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+
+        #timer2 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            color: red; /* Customize the color of the second timer */
+        }
+
+        /* Position the Word Count on the right */
+        #word-count {
+            position: absolute;
+            bottom: 60px; /* Adjust top position as needed */
+            right: 600px; /* Adjust right position as needed */
+        }
+    </style>
+</head>
+<body>
+    <h1>Focus Writing App</h1>
+    <div id="app-container">
+        <div id="dark-btn">
+            <p class="info-text">Type continuously to keep your text. Stop typing for 30 seconds, and it will be deleted.</p>
+            
+            <!-- Add dark mode toggle button -->
+            <button class="btn-dark-mode" onclick="toggleDarkMode()">Dark Mode</button>
+        </div>
+        <div id="editor" contenteditable="true"></div>
+        <p id="word-count">Word Count: 0</p>
+        <!-- Add countdown timer -->
+        <div id="timer">30s</div>
+        <!-- Add second countdown timer -->
+        <div id="timer2">5s</div>
+        <button class="btn-clear" onclick="deleteText()">Clear Text</button>
+
+    </div>
+    <script>
+        let timer;
+        let wordCount = 0;
+        let countdown = 30; // Initial countdown value in seconds
+        let isTyping = false; // Track if the user is typing
+        let typingTimeout; // Timer to detect typing activity
+        let timer2;
+        let countdown2 = 5; // Second timer value in seconds
+
+        const editor = document.getElementById('editor');
+        const wordCountDisplay = document.getElementById('word-count');
+        const timerDisplay = document.getElementById('timer');
+        const timer2Display = document.getElementById('timer2');
+
+        function startTimer() {
+            clearTimeout(timer);
+            if (!isTyping) {
+                countdown = 30; // Reset countdown to 30 seconds after 5 seconds of inactivity
+                timer = setTimeout(deleteText, countdown * 1000); // Convert seconds to milliseconds
+            } 
+            if (isTyping) {
+                timerDisplay.textContent = `${30}s`;
+            }
+        }
+
+        function deleteText() {
+            editor.innerHTML = '';
+            updateWordCount();
+            countdown = 30; // Reset the countdown timer
+            updateTimerDisplay();
+        }
+
+        function updateWordCount() {
+            const text = editor.textContent || editor.innerText;
+            const words = text.split(/\s+/).filter(word => word !== '');
+            wordCount = words.length;
+            wordCountDisplay.textContent = `Word Count: ${wordCount}`;
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        function updateTimerDisplay() {
+            timerDisplay.textContent = `${countdown}s`;
+        }
+
+        function updateTimer2Display() {
+            timer2Display.textContent = `${countdown2}s`;
+        }
+
+        function startTypingTimeout() {
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                isTyping = false;
+                countdown = 30; // Reset the countdown timer
+                updateTimerDisplay();
+                startTimer();
+            }, 5000); // 5 seconds
+        }
+
+        function startCountdown2() {
+            timer2 = setInterval(() => {
+                countdown2--;
+                updateTimer2Display();
+                if (countdown2 === 0) {
+                    clearInterval(timer2);
+                    // Do something when the second countdown reaches 0 (e.g., display a message)
+                    timer2Display.textContent = '0s - Typing Stopped';
+                }
+            }, 1000); // Update the second timer every second
+        }
+
+        editor.addEventListener('input', () => {
+            isTyping = true;
+            startTypingTimeout();
+            updateWordCount();
+            startTimer(); // Start the countdown timer whenever typing occurs
+            clearInterval(timer2); // Reset the second countdown timer
+            countdown2 = 5; // Reset the second countdown value
+            updateTimer2Display();
+            startCountdown2(); // Start the second countdown timer
+        });
+
+        // Countdown timer logic
+        function countDownTimer() {
+            if (countdown > 0 && !isTyping) {
+                countdown--;
+                updateTimerDisplay();
+            }
+            setTimeout(countDownTimer, 1000); // Update timer every second
+        }
+
+        // Start the countdown timer only after 5 seconds of inactivity
+        let countdownTimeout;
+
+        editor.addEventListener('input', () => {
+            clearTimeout(countdownTimeout);
+            countdownTimeout = setTimeout(() => {
+                updateTimerDisplay();
+                startTimer();
+            }, 5000); // 5 seconds
+        });
+
+        // Start the countdown timer only after 5 seconds of inactivity
+        setTimeout(countDownTimer, 5000);
+
+        updateWordCount(); // Update word count on page load
+        updateTimerDisplay(); // Initialize timer display
+        updateTimer2Display(); // Initialize the second timer display
+    </script>
+</body>
+</html>
